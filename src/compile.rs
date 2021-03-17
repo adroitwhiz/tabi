@@ -8,7 +8,7 @@ use crate::{
 pub fn compile_block_input(
     input: &BlockInput,
     instructions: &mut Vec<Instruction>,
-    blocks: &Vec<Block>,
+    blocks: &[Block],
 ) {
     match input {
         BlockInput::Literal(v) => instructions.push(Instruction::Push(v.clone())),
@@ -17,7 +17,7 @@ pub fn compile_block_input(
     }
 }
 
-pub fn compile_block(block: &Block, instructions: &mut Vec<Instruction>, blocks: &Vec<Block>) {
+pub fn compile_block(block: &Block, instructions: &mut Vec<Instruction>, blocks: &[Block]) {
     match block.spec.name {
         "math_number" => {
             compile_block_input(&block.field_values[0], instructions, blocks);
@@ -65,11 +65,7 @@ pub fn compile_block(block: &Block, instructions: &mut Vec<Instruction>, blocks:
     }
 }
 
-pub fn compile_substack(
-    substack_id: usize,
-    instructions: &mut Vec<Instruction>,
-    blocks: &Vec<Block>,
-) {
+pub fn compile_substack(substack_id: usize, instructions: &mut Vec<Instruction>, blocks: &[Block]) {
     let mut next_idx = Some(substack_id);
 
     while let Some(block_idx) = next_idx {
@@ -87,7 +83,7 @@ pub fn compile_hat(block: &Block) -> Trigger {
     }
 }
 
-pub fn compile_blocks(blocks: &Vec<Block>) -> Vec<Script> {
+pub fn compile_blocks(blocks: &[Block]) -> Box<[Script]> {
     let mut scripts = Vec::new();
 
     blocks
@@ -105,5 +101,5 @@ pub fn compile_blocks(blocks: &Vec<Block>) -> Vec<Script> {
             })
         });
 
-    scripts
+    scripts.into_boxed_slice()
 }

@@ -33,12 +33,12 @@ impl<'a, 'eng> Runtime<'a, 'eng> {
         let threads = &mut rt.threads;
 
         rt.project.targets.iter().for_each(|target| {
-            let mut thread_indices = Vec::new();
+            let mut thread_indices = Vec::with_capacity(target.scripts.len());
             target.scripts.iter().for_each(|script| {
                 threads.push(Thread::new(script));
                 thread_indices.push(threads.len() - 1);
             });
-            let sprite = Sprite::new(target, thread_indices);
+            let sprite = Sprite::new(target, thread_indices.into_boxed_slice());
             sprites.push(sprite);
         });
 
@@ -65,8 +65,8 @@ impl<'a, 'eng> Runtime<'a, 'eng> {
             let mut num_active_threads = 0;
 
             for sprite in &mut self.sprites {
-                for thread_idx in sprite.thread_indices.clone() {
-                    let thread = &mut self.threads[thread_idx];
+                for thread_idx in sprite.thread_indices.clone().iter() {
+                    let thread = &mut self.threads[*thread_idx];
                     let thread_status = thread.status;
 
                     if thread_status == ThreadStatus::Done {

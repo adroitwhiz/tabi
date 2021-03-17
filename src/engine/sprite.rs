@@ -6,12 +6,12 @@ pub struct Sprite<'a> {
     pub direction: f64,
     pub size: f64,
     pub visible: bool,
-    pub thread_indices: Vec<usize>,
+    pub thread_indices: Box<[usize]>,
     pub target: &'a Target,
 }
 
 impl<'a> Sprite<'a> {
-    pub fn new(target: &'a Target, thread_indices: Vec<usize>) -> Self {
+    pub fn new(target: &'a Target, thread_indices: Box<[usize]>) -> Self {
         Sprite {
             x: 0.0,
             y: 0.0,
