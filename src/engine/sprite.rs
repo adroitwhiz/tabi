@@ -1,7 +1,4 @@
-use std::cell::RefCell;
-
 use crate::engine::target::Target;
-use crate::engine::thread::Thread;
 
 pub struct Sprite<'a> {
     pub x: f64,
@@ -9,26 +6,19 @@ pub struct Sprite<'a> {
     pub direction: f64,
     pub size: f64,
     pub visible: bool,
-    pub threads: Vec<RefCell<Thread<'a>>>,
+    pub thread_indices: Vec<usize>,
     pub target: &'a Target,
 }
 
 impl<'a> Sprite<'a> {
-    pub fn new(target: &'a Target) -> Self {
-        // Create a new thread for every script
-        let threads: Vec<RefCell<Thread>> = target
-            .scripts
-            .iter()
-            .map(|s| { RefCell::new(Thread::new(s)) })
-            .collect();
-
+    pub fn new(target: &'a Target, thread_indices: Vec<usize>) -> Self {
         Sprite {
             x: 0.0,
             y: 0.0,
             direction: 0.0,
             size: 100.0,
             visible: true,
-            threads,
+            thread_indices,
             target,
         }
     }

@@ -3,7 +3,7 @@ use crate::scalar_value::ScalarValue;
 
 use super::trigger::Trigger;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum ThreadStatus {
     Running,
     Yield,
@@ -71,7 +71,7 @@ impl<'a> Thread<'a> {
 
     pub fn push_stack_frame(&mut self) {
         self.stack_frames.push(StackFrame {
-            frame_value: ScalarValue::Num(0.0)
+            frame_value: ScalarValue::Num(0.0),
         })
     }
 

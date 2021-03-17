@@ -53,9 +53,15 @@ impl From<ScalarValue> for bool {
 impl From<ScalarValue> for f64 {
     fn from(value: ScalarValue) -> f64 {
         match value {
-            ScalarValue::Bool(v) => if v {1.0} else {0.0},
+            ScalarValue::Bool(v) => {
+                if v {
+                    1.0
+                } else {
+                    0.0
+                }
+            }
             ScalarValue::Num(v) => v,
-            ScalarValue::Text(v) => v.parse::<f64>().unwrap_or(0.0)
+            ScalarValue::Text(v) => v.parse::<f64>().unwrap_or(0.0),
         }
     }
 }
