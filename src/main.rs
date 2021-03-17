@@ -16,13 +16,17 @@ pub mod blocks {
     pub mod block_specs;
 }
 
+pub mod data {
+    pub mod asset;
+}
+
 pub mod compile;
 pub mod deserialize;
 pub mod runtime;
 
 use crate::engine::engine_data::EngineData;
 
-use std::{fs, io::Read};
+use std::fs;
 use zip;
 
 fn main() {
@@ -44,11 +48,7 @@ fn main() {
 
     let mut archive = zip::ZipArchive::new(file).unwrap();
 
-    let mut project_json = archive.by_name("project.json").unwrap();
-    let mut buffer = String::new();
-    project_json.read_to_string(&mut buffer).unwrap();
-
-    let d = deserialize::deserialize_project(&buffer, &eng_data);
+    let d = deserialize::deserialize_project(&mut archive, &eng_data);
 
     match d {
         Ok(p) => {

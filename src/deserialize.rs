@@ -4,16 +4,19 @@ use crate::{
         block_specs::BlockSpecMap,
     },
     compile::compile_blocks,
+    data::asset,
     engine::{engine_data::EngineData, project, target},
     scalar_value::ScalarValue,
 };
 
-use std::collections::HashMap;
 use std::convert::TryFrom;
+use std::{collections::HashMap, convert::TryInto, fs::File, io::Read};
 
+use md5::Digest;
 use serde_json::{Map, Value};
 
 use num_enum::TryFromPrimitive;
+use zip::ZipArchive;
 
 #[derive(TryFromPrimitive)]
 #[repr(u8)]
@@ -234,8 +237,73 @@ fn deserialize_blocks<'eng>(
     Ok(blocks)
 }
 
+fn deserialize_asset(
+    serialized_asset: &Map<String, Value>,
+    archive: &mut ZipArchive<File>,
+) -> Result<asset::Asset, &'static str> {
+    let md5ext = serialized_asset["md5ext"]
+        .as_str()
+        .ok_or_else(|| "asset has no md5ext")?;
+    let md5_str = serialized_asset["assetId"]
+        .as_str()
+        .ok_or_else(|| "asset has no assetId")?;
+    let asset_type_str = serialized_asset["dataFormat"]
+        .as_str()
+        .ok_or_else(|| "asset has no dataFormat")?;
+
+    let mut asset_file = archive
+        .by_name(md5ext)
+        .map_err(|_| "asset not found in zip")?;
+    let mut asset_data: Vec<u8> = Vec::with_capacity(asset_file.size() as usize);
+    asset_file
+        .read_to_end(&mut asset_data)
+        .map_err(|_| "could not read asset file")?;
+
+    let md5_bytes = hex::decode(md5_str).map_err(|_| "could not decode assetId")?;
+
+    let asset_type = match asset_type_str {
+        "png" => Ok(asset::AssetType::PNG),
+        "svg" => Ok(asset::AssetType::SVG),
+        "jpg" => Ok(asset::AssetType::JPEG),
+        "mp3" => Ok(asset::AssetType::MP3),
+        "wav" => Ok(asset::AssetType::WAV),
+        _ => Err("unknown asset type"),
+    }?;
+
+    Ok(asset::Asset {
+        data: asset_data.into_boxed_slice(),
+        md5_digest: Digest(
+            TryInto::<[u8; 16]>::try_into(md5_bytes).map_err(|_| "could not decode assetId")?,
+        ),
+        asset_type,
+    })
+}
+
+fn deserialize_costume(
+    serialized_costume: &Map<String, Value>,
+    archive: &mut ZipArchive<File>,
+) -> Result<asset::Costume, &'static str> {
+    let d_asset = deserialize_asset(serialized_costume, archive)?;
+    let rotation_center_x = serialized_costume["rotationCenterX"]
+        .as_f64()
+        .ok_or_else(|| "costume has no rotationCenterX")?;
+    let rotation_center_y = serialized_costume["rotationCenterY"]
+        .as_f64()
+        .ok_or_else(|| "costume has no rotationCenterY")?;
+    let name = serialized_costume["name"]
+        .as_str()
+        .ok_or_else(|| "costume has no name")?;
+
+    Ok(asset::Costume {
+        asset: d_asset,
+        rotation_center: (rotation_center_x, rotation_center_y),
+        name: name.to_string(),
+    })
+}
+
 fn deserialize_target<'eng>(
     serialized_target: &Map<String, Value>,
+    archive: &mut ZipArchive<File>,
     eng_data: &'eng EngineData,
 ) -> Result<target::Target, &'static str> {
     let is_stage = serialized_target["isStage"]
@@ -250,27 +318,44 @@ fn deserialize_target<'eng>(
     let layer_order = serialized_target["layerOrder"]
         .as_u64()
         .ok_or_else(|| "target has no layerOrder")?;
+    let costumes = serialized_target["costumes"]
+        .as_array()
+        .ok_or_else(|| "target has no costumes")?;
     let d_blocks = deserialize_blocks(blocks, eng_data)?;
+    let mut d_costumes = Vec::with_capacity(costumes.len());
+    for costume in costumes {
+        d_costumes.push(deserialize_costume(
+            costume
+                .as_object()
+                .ok_or_else(|| "costume is not an object")?,
+            archive,
+        )?);
+    }
     println!("{:#?}", d_blocks);
     Ok(target::Target {
         scripts: compile_blocks(&d_blocks),
         is_stage,
         name: name.to_string(),
         layer_order: layer_order as u32,
+        costumes: d_costumes.into_boxed_slice(),
     })
 }
 
 pub fn deserialize_project<'a, 'eng>(
-    json: &'a String,
+    archive: &mut ZipArchive<File>,
     eng_data: &'eng EngineData,
 ) -> Result<project::Project, &'a str> {
-    let v: Result<Value, serde_json::Error> = serde_json::from_str(json);
-
-    // TODO: probably not the best way to convert errors
-    if let Err(_) = v {
-        return Err("Could not deserialize JSON");
+    let mut json = String::new();
+    {
+        let mut project_json_file = archive
+            .by_name("project.json")
+            .map_err(|_| "project.json not found")?;
+        project_json_file
+            .read_to_string(&mut json)
+            .map_err(|_| "Could not read project.json")?;
     }
-    let v = v.unwrap();
+
+    let v: Value = serde_json::from_str(&json).map_err(|_| "Could not deserialize JSON")?;
 
     let mut targets = vec![];
 
@@ -279,7 +364,7 @@ pub fn deserialize_project<'a, 'eng>(
             .into_iter()
             .try_for_each(|target| -> Result<(), &str> {
                 if let serde_json::Value::Object(target) = target {
-                    match deserialize_target(&target, &eng_data) {
+                    match deserialize_target(&target, archive, &eng_data) {
                         Ok(t) => {
                             targets.push(t);
                             Ok(())

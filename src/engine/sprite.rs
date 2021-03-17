@@ -8,6 +8,7 @@ pub struct Sprite<'a> {
     pub visible: bool,
     pub thread_indices: Box<[usize]>,
     pub target: &'a Target,
+    pub layer_order: u32,
 }
 
 impl<'a> Sprite<'a> {
@@ -20,6 +21,7 @@ impl<'a> Sprite<'a> {
             visible: true,
             thread_indices,
             target,
+            layer_order: target.layer_order,
         }
     }
 
