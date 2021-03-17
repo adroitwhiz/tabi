@@ -6,20 +6,18 @@ pub struct Sprite<'a> {
     pub direction: f64,
     pub size: f64,
     pub visible: bool,
-    pub thread_indices: Box<[usize]>,
     pub target: &'a Target,
     pub layer_order: u32,
 }
 
 impl<'a> Sprite<'a> {
-    pub fn new(target: &'a Target, thread_indices: Box<[usize]>) -> Self {
+    pub fn new(target: &'a Target) -> Self {
         Sprite {
             x: 0.0,
             y: 0.0,
             direction: 0.0,
             size: 100.0,
             visible: true,
-            thread_indices,
             target,
             layer_order: target.layer_order,
         }
