@@ -87,6 +87,11 @@ impl<'a, 'eng> Runtime<'a, 'eng> {
                     if thread.status == ThreadStatus::Running {
                         num_active_threads += 1;
                     }
+
+                    if thread.redraw_requested {
+                        thread.redraw_requested = false;
+                        self.redraw_requested = true;
+                    }
                 }
             }
 

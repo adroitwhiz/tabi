@@ -44,7 +44,7 @@ pub fn execute(sprite: &mut Sprite, current_thread: &mut Thread) {
         }
 
         Instruction::RequestRedraw => {
-            unimplemented!();
+            current_thread.request_redraw();
         }
 
         // Operators

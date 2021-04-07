@@ -25,6 +25,7 @@ pub struct Thread<'a> {
     stack_frames: Vec<StackFrame>,
     pub instruction_pointer: usize,
     pub status: ThreadStatus,
+    pub redraw_requested: bool,
 }
 
 impl<'a> Thread<'a> {
@@ -35,7 +36,12 @@ impl<'a> Thread<'a> {
             stack_frames: vec![],
             instruction_pointer: 0,
             status: ThreadStatus::Done,
+            redraw_requested: false,
         }
+    }
+
+    pub fn request_redraw(&mut self) {
+        self.redraw_requested = true;
     }
 
     pub fn trigger_matches(&self, trigger: &Trigger) -> bool {
