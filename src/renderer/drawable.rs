@@ -32,8 +32,17 @@ impl RendererState for DrawableRendererState {
                     visibility: wgpu::ShaderStage::FRAGMENT,
                     ty: wgpu::BindingType::Texture {
                         multisampled: false,
-                        sample_type: wgpu::TextureSampleType::Uint,
+                        sample_type: wgpu::TextureSampleType::Float {filterable: true},
                         view_dimension: wgpu::TextureViewDimension::D2
+                    },
+                    count: None
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 2,
+                    visibility: wgpu::ShaderStage::FRAGMENT,
+                    ty: wgpu::BindingType::Sampler {
+                        comparison: false,
+                        filtering: true
                     },
                     count: None
                 }
@@ -52,7 +61,7 @@ struct DrawableUniforms {
 
 pub struct Drawable {
     matrix: Affine2,
-    skin: Rc<dyn Skin>,
+    skin: Rc<RefCell<dyn Skin>>,
     position: Vec2,
     rotation: f32,
     scale: Vec2,
@@ -66,7 +75,7 @@ pub struct Drawable {
 
 impl Drawable {
     pub(super) fn new(
-        skin: Rc<dyn Skin>,
+        skin: Rc<RefCell<dyn Skin>>,
         gpu_state: &GpuState,
         state: &DrawableRendererState,
     ) -> Self {
@@ -86,10 +95,14 @@ impl Drawable {
                         binding: 0,
                         resource: uniform_buf.as_entire_binding(),
                     },
-                    /*wgpu::BindGroupEntry {
+                    wgpu::BindGroupEntry {
                         binding: 1,
-                        resource: wgpu::BindingResource::TextureView(skin.get_texture(1f32))
-                    }*/
+                        resource: wgpu::BindingResource::TextureView(skin.borrow_mut().get_texture(1f32))
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 2,
+                        resource: wgpu::BindingResource::Sampler(&gpu_state.sampler_linear)
+                    }
                 ],
                 label: None,
             });
@@ -117,7 +130,7 @@ impl Drawable {
 
     // TODO
     fn calculate_transform(&mut self) {
-        let skin_size = self.skin.get_size();
+        let skin_size = self.skin.borrow_mut().get_size();
         self.matrix = Affine2::from_scale_angle_translation(
             skin_size * self.scale,
             self.rotation,
@@ -132,7 +145,7 @@ impl Drawable {
     }
 
     pub fn set_position(&mut self, position: Vec2) {
-        self.position = position;
+        self.position = position.round();
         self.set_matrix_dirty();
     }
 
@@ -161,11 +174,11 @@ impl Drawable {
         self.matrix
     }
 
-    pub fn get_skin(&self) -> Rc<dyn Skin> {
+    pub fn get_skin(&self) -> Rc<RefCell<dyn Skin>> {
         Rc::clone(&self.skin)
     }
 
-    pub fn set_skin(&mut self, skin: Rc<dyn Skin>) {
+    pub fn set_skin(&mut self, skin: Rc<RefCell<dyn Skin>>) {
         self.skin = skin;
         self.set_matrix_dirty();
     }

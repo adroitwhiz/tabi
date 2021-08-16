@@ -33,7 +33,7 @@ impl SVGSkin {
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8Uint,
+            format: wgpu::TextureFormat::Rgba8Unorm,
             usage: wgpu::TextureUsage::SAMPLED | wgpu::TextureUsage::COPY_DST
         });
         let texture_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
@@ -46,7 +46,7 @@ impl SVGSkin {
             pixmap.data(),
             wgpu::ImageDataLayout {
                 offset: 0,
-                bytes_per_row: Some(std::num::NonZeroU32::new(size.x.round() as u32 * 4).unwrap()),
+                bytes_per_row: std::num::NonZeroU32::new(size.x.round() as u32 * 4),
                 rows_per_image: None
             },
             texture_extent

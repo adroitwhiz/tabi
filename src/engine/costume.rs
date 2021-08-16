@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{data::asset::{Asset, AssetType}, renderer::{renderer::Renderer, skin::Skin}};
 
@@ -36,5 +36,5 @@ impl CostumeAsset {
 #[derive(Debug)]
 pub struct Costume {
     pub costume_asset: CostumeAsset,
-    pub skin: Rc<dyn Skin>
+    pub skin: Rc<RefCell<dyn Skin>>
 }

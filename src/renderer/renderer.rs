@@ -29,6 +29,8 @@ pub(super) struct GpuState {
     pub vertex_buf: wgpu::Buffer,
     pub index_buf: wgpu::Buffer,
     pub stage_bind_group: wgpu::BindGroup,
+    pub sampler_nearest: wgpu::Sampler,
+    pub sampler_linear: wgpu::Sampler,
 }
 
 #[repr(C)]
@@ -42,7 +44,7 @@ pub struct Renderer {
     drawable_renderer_state: DrawableRendererState,
     drawables: HashMap<DrawableID, Drawable>,
     draw_list: Vec<DrawableID>,
-    skins: Vec<Rc<dyn Skin>>,
+    skins: Vec<Rc<RefCell<dyn Skin>>>,
     stage_size: (u32, u32),
     next_drawable_id: usize
 }
@@ -57,19 +59,19 @@ struct Vertex {
 static QUAD_VERTS: [Vertex; 4] = [
     Vertex {
         _pos: [-0.5, -0.5],
-        _tex_coord: [1.0, 0.0],
+        _tex_coord: [0.0, 1.0],
     },
     Vertex {
         _pos: [0.5, -0.5],
-        _tex_coord: [0.0, 0.0],
-    },
-    Vertex {
-        _pos: [-0.5, 0.5],
         _tex_coord: [1.0, 1.0],
     },
     Vertex {
+        _pos: [-0.5, 0.5],
+        _tex_coord: [0.0, 0.0],
+    },
+    Vertex {
         _pos: [0.5, 0.5],
-        _tex_coord: [0.0, 1.0],
+        _tex_coord: [1.0, 0.0],
     },
 ];
 
@@ -176,7 +178,7 @@ impl Renderer {
             ],
         }];
 
-        let swapchain_format = adapter.get_swap_chain_preferred_format(&surface).unwrap();
+        let swapchain_format = wgpu::TextureFormat::Bgra8Unorm;
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: None,
@@ -189,7 +191,11 @@ impl Renderer {
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
                 entry_point: "fs_main",
-                targets: &[swapchain_format.into()],
+                targets: &[wgpu::ColorTargetState {
+                    format: swapchain_format.into(),
+                    blend: Some(wgpu::BlendState::PREMULTIPLIED_ALPHA_BLENDING),
+                    write_mask: wgpu::ColorWrite::default()
+                }],
             }),
             primitive: wgpu::PrimitiveState::default(),
             depth_stencil: None,
@@ -206,6 +212,28 @@ impl Renderer {
 
         let swap_chain = device.create_swap_chain(&surface, &sc_desc);
 
+        let sampler_nearest= device.create_sampler(&wgpu::SamplerDescriptor {
+            label: Some("mip"),
+            address_mode_u: wgpu::AddressMode::ClampToEdge,
+            address_mode_v: wgpu::AddressMode::ClampToEdge,
+            address_mode_w: wgpu::AddressMode::ClampToEdge,
+            mag_filter: wgpu::FilterMode::Nearest,
+            min_filter: wgpu::FilterMode::Nearest,
+            mipmap_filter: wgpu::FilterMode::Nearest,
+            ..Default::default()
+        });
+
+        let sampler_linear= device.create_sampler(&wgpu::SamplerDescriptor {
+            label: Some("mip"),
+            address_mode_u: wgpu::AddressMode::ClampToEdge,
+            address_mode_v: wgpu::AddressMode::ClampToEdge,
+            address_mode_w: wgpu::AddressMode::ClampToEdge,
+            mag_filter: wgpu::FilterMode::Linear,
+            min_filter: wgpu::FilterMode::Linear,
+            mipmap_filter: wgpu::FilterMode::Linear,
+            ..Default::default()
+        });
+
         let gpu_state = GpuState {
             swap_chain,
             sc_desc,
@@ -216,6 +244,8 @@ impl Renderer {
             vertex_buf,
             index_buf,
             stage_bind_group,
+            sampler_nearest,
+            sampler_linear
         };
 
         Self {
@@ -296,14 +326,14 @@ impl Renderer {
             .create_swap_chain(&self.gpu_state.surface, &self.gpu_state.sc_desc);
     }
 
-    pub fn create_blank_skin(&mut self) -> Rc<dyn Skin> {
-        let s = Rc::new(BlankSkin::new(Vec2::new(100f32, 75f32), Vec2::new(50.0, 37.5)));
+    pub fn create_blank_skin(&mut self) -> Rc<RefCell<dyn Skin>> {
+        let s = Rc::new(RefCell::new(BlankSkin::new(Vec2::new(100f32, 75f32), Vec2::new(50.0, 37.5))));
         self.skins.push(s);
         Rc::clone(&self.skins[self.skins.len() - 1])
     }
 
-    pub fn create_svg_skin(&mut self, svg_data: &[u8], rotation_center: (f64, f64)) -> Rc<dyn Skin> {
-        let s = Rc::new(SVGSkin::new(&self.gpu_state, svg_data, Vec2::new(rotation_center.0 as f32, rotation_center.0 as f32)));
+    pub fn create_svg_skin(&mut self, svg_data: &[u8], rotation_center: (f64, f64)) -> Rc<RefCell<dyn Skin>> {
+        let s = Rc::new(RefCell::new(SVGSkin::new(&self.gpu_state, svg_data, Vec2::new(rotation_center.0 as f32, rotation_center.0 as f32))));
         self.skins.push(s);
         Rc::clone(&self.skins[self.skins.len() - 1])
     }
@@ -312,11 +342,11 @@ impl Renderer {
         self.draw_list.push(drawable_id);
     }
 
-    pub fn create_drawable(&mut self, skin: Rc<dyn Skin>) -> DrawableID {
+    pub fn create_drawable(&mut self, skin: Rc<RefCell<dyn Skin>>) -> DrawableID {
         let next_drawable_id = self.next_drawable_id;
         self.next_drawable_id += 1;
         let id = DrawableID(next_drawable_id);
-        let d = Drawable::new(
+        let mut d = Drawable::new(
             skin,
             &self.gpu_state,
             &self.drawable_renderer_state,
