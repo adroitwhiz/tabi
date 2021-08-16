@@ -31,7 +31,7 @@ impl<'a, 'eng, 'r> Runtime<'a, 'eng, 'r> {
     pub fn new(
         project: &'a Project,
         engine_data: &'eng EngineData,
-        mut renderer: &'r mut Renderer,
+        renderer: &'r mut Renderer,
     ) -> Self {
         let mut exec_contexts = Vec::new();
 
@@ -41,7 +41,7 @@ impl<'a, 'eng, 'r> Runtime<'a, 'eng, 'r> {
                 .iter()
                 .map(|script| Thread::new(script))
                 .collect();
-            let sprite = Sprite::new(target, &mut renderer);
+            let sprite = Sprite::new(target, renderer);
             exec_contexts.push(ExecutionContext { sprite, threads });
         });
 
@@ -116,6 +116,7 @@ impl<'a, 'eng, 'r> Runtime<'a, 'eng, 'r> {
     }
 
     pub fn step(&mut self) {
+        self.step_threads();
         self.renderer.draw();
     }
 

@@ -11,7 +11,7 @@ pub struct Sprite<'t> {
     pub visible: bool,
     pub target: &'t Target,
     pub layer_order: u32,
-    pub drawable: DrawableID
+    pub drawable: DrawableID,
 }
 
 impl<'t> Sprite<'t> {

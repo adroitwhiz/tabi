@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 
 use crate::scalar_value::ScalarValue;
 
-use super::{instruction::Instruction, sprite::Sprite, thread::Thread};
+use super::{instruction::Instruction, sprite::Sprite, thread::{Thread, ThreadStatus}};
 
 pub fn execute(sprite: &mut Sprite, current_thread: &mut Thread) {
     let instruction = &current_thread.code.instructions[current_thread.instruction_pointer];
@@ -20,7 +20,7 @@ pub fn execute(sprite: &mut Sprite, current_thread: &mut Thread) {
         }
 
         Instruction::JumpIfTrue(to) => {
-            if bool::from(current_thread.pop_stack()) {
+            if bool::from(&current_thread.pop_stack()) {
                 current_thread.instruction_pointer = *to;
                 did_jump = true;
             }
@@ -51,13 +51,13 @@ pub fn execute(sprite: &mut Sprite, current_thread: &mut Thread) {
         Instruction::Add => {
             let op1 = current_thread.pop_stack();
             let op2 = current_thread.pop_stack();
-            current_thread.push_stack(ScalarValue::Num(f64::from(op2) + f64::from(op1)));
+            current_thread.push_stack(ScalarValue::Num(f64::from(&op2) + f64::from(&op1)));
         }
 
         Instruction::Subtract => {
             let op1 = current_thread.pop_stack();
             let op2 = current_thread.pop_stack();
-            current_thread.push_stack(ScalarValue::Num(f64::from(op2) - f64::from(op1)));
+            current_thread.push_stack(ScalarValue::Num(f64::from(&op2) - f64::from(&op1)));
         }
 
         Instruction::LessThan => {
@@ -82,11 +82,11 @@ pub fn execute(sprite: &mut Sprite, current_thread: &mut Thread) {
         Instruction::GotoXY => {
             let op1 = current_thread.pop_stack();
             let op2 = current_thread.pop_stack();
-            sprite.move_to(f64::from(op1), f64::from(op2));
+            sprite.move_to(f64::from(&op1), f64::from(&op2));
         }
 
         Instruction::MoveSteps => {
-            let steps = f64::from(current_thread.pop_stack());
+            let steps = f64::from(&current_thread.pop_stack());
             let angle = (90.0 - sprite.direction) * (std::f64::consts::PI / 180.0);
             sprite.move_to(
                 sprite.x + (angle.sin() * steps),
@@ -97,5 +97,8 @@ pub fn execute(sprite: &mut Sprite, current_thread: &mut Thread) {
 
     if !did_jump {
         current_thread.instruction_pointer += 1;
+        if current_thread.instruction_pointer >= current_thread.code.instructions.len() {
+            current_thread.status = ThreadStatus::Done;
+        }
     }
 }

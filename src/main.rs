@@ -34,7 +34,7 @@ pub mod renderer {
     pub mod svg_skin;
 }
 
-use crate::engine::engine_data::EngineData;
+use crate::engine::{engine_data::EngineData, trigger::Trigger};
 
 use renderer::renderer::Renderer;
 use runtime::Runtime;
@@ -84,6 +84,8 @@ fn run() -> Result<(), Box<dyn Error>> {
     println!("{:?}", project);
 
     let mut runtime = Runtime::new(&project, &eng_data, &mut renderer);
+
+    runtime.start_hats(&Trigger::WhenFlagClicked);
 
     let mut last_update_inst = Instant::now();
 
