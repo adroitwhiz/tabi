@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::engine::target::Target;
-use crate::renderer::renderer::{Renderer, DrawableID};
+use crate::renderer::renderer::{DrawableID, Renderer};
 
 pub struct Sprite<'t, 'r> {
     pub x: f64,
@@ -13,7 +13,7 @@ pub struct Sprite<'t, 'r> {
     pub target: &'t Target,
     pub layer_order: u32,
     pub drawable: DrawableID,
-    pub renderer: &'r RefCell<Renderer>
+    pub renderer: &'r RefCell<Renderer>,
 }
 
 impl<'t, 'r> Sprite<'t, 'r> {
@@ -26,14 +26,18 @@ impl<'t, 'r> Sprite<'t, 'r> {
             visible: true,
             target,
             layer_order: target.layer_order,
-            drawable: renderer.borrow_mut().create_drawable(Rc::clone(&target.costumes[0].skin)),
-            renderer
+            drawable: renderer
+                .borrow_mut()
+                .create_drawable(Rc::clone(&target.costumes[0].skin)),
+            renderer,
         }
     }
 
     pub fn move_to(&mut self, x: f64, y: f64) {
         self.x = x;
         self.y = y;
-        self.renderer.borrow_mut().update_drawable_position(self.drawable, (self.x, self.y));
+        self.renderer
+            .borrow_mut()
+            .update_drawable_position(self.drawable, (self.x, self.y));
     }
 }

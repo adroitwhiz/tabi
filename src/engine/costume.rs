@@ -1,6 +1,9 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{data::asset::{Asset, AssetType}, renderer::{renderer::Renderer, skin::Skin}};
+use crate::{
+    data::asset::{Asset, AssetType},
+    renderer::{renderer::Renderer, skin::Skin},
+};
 
 #[derive(Debug)]
 pub struct CostumeAsset {
@@ -10,17 +13,15 @@ pub struct CostumeAsset {
 }
 
 impl CostumeAsset {
-    pub fn load (self, renderer: &mut Renderer) -> Costume {
+    pub fn load(self, renderer: &mut Renderer) -> Costume {
         let skin = match self.asset.asset_type {
-            AssetType::SVG => {
-                renderer.create_svg_skin(&self.asset.data, self.rotation_center)
-            },
+            AssetType::SVG => renderer.create_svg_skin(&self.asset.data, self.rotation_center),
             AssetType::PNG => {
                 unimplemented!()
-            },
+            }
             AssetType::JPEG => {
                 unimplemented!()
-            },
+            }
             AssetType::MP3 | AssetType::WAV => {
                 panic!("Costume given non-image asset type")
             }
@@ -28,7 +29,7 @@ impl CostumeAsset {
 
         Costume {
             costume_asset: self,
-            skin
+            skin,
         }
     }
 }
@@ -36,5 +37,5 @@ impl CostumeAsset {
 #[derive(Debug)]
 pub struct Costume {
     pub costume_asset: CostumeAsset,
-    pub skin: Rc<RefCell<dyn Skin>>
+    pub skin: Rc<RefCell<dyn Skin>>,
 }

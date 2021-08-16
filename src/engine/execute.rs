@@ -2,7 +2,11 @@ use std::cmp::Ordering;
 
 use crate::scalar_value::ScalarValue;
 
-use super::{instruction::Instruction, sprite::Sprite, thread::{Thread, ThreadStatus}};
+use super::{
+    instruction::Instruction,
+    sprite::Sprite,
+    thread::{Thread, ThreadStatus},
+};
 
 pub fn execute(sprite: &mut Sprite, current_thread: &mut Thread) {
     let instruction = &current_thread.code.instructions[current_thread.instruction_pointer];

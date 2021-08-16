@@ -10,7 +10,10 @@ pub struct BlankSkin {
 
 impl BlankSkin {
     pub fn new(size: Vec2, rotation_center: Vec2) -> Self {
-        BlankSkin { size, rotation_center }
+        BlankSkin {
+            size,
+            rotation_center,
+        }
     }
 }
 

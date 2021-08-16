@@ -5,7 +5,7 @@ use bytemuck::{Pod, Zeroable};
 use glam::{Affine2, Vec2};
 
 use super::common::RendererState;
-use super::renderer::{GpuState};
+use super::renderer::GpuState;
 use super::skin::Skin;
 
 pub(super) struct DrawableRendererState {
@@ -32,20 +32,20 @@ impl RendererState for DrawableRendererState {
                     visibility: wgpu::ShaderStage::FRAGMENT,
                     ty: wgpu::BindingType::Texture {
                         multisampled: false,
-                        sample_type: wgpu::TextureSampleType::Float {filterable: true},
-                        view_dimension: wgpu::TextureViewDimension::D2
+                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        view_dimension: wgpu::TextureViewDimension::D2,
                     },
-                    count: None
+                    count: None,
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 2,
                     visibility: wgpu::ShaderStage::FRAGMENT,
                     ty: wgpu::BindingType::Sampler {
                         comparison: false,
-                        filtering: true
+                        filtering: true,
                     },
-                    count: None
-                }
+                    count: None,
+                },
             ],
         });
 
@@ -97,12 +97,14 @@ impl Drawable {
                     },
                     wgpu::BindGroupEntry {
                         binding: 1,
-                        resource: wgpu::BindingResource::TextureView(skin.borrow_mut().get_texture(1f32))
+                        resource: wgpu::BindingResource::TextureView(
+                            skin.borrow_mut().get_texture(1f32),
+                        ),
                     },
                     wgpu::BindGroupEntry {
                         binding: 2,
-                        resource: wgpu::BindingResource::Sampler(&gpu_state.sampler_linear)
-                    }
+                        resource: wgpu::BindingResource::Sampler(&gpu_state.sampler_linear),
+                    },
                 ],
                 label: None,
             });

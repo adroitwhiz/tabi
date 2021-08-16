@@ -11,7 +11,7 @@ use super::{
     common::RendererState,
     drawable::{Drawable, DrawableRendererState},
     skin::Skin,
-    svg_skin::SVGSkin
+    svg_skin::SVGSkin,
 };
 
 const NUM_INDICES: usize = 6;
@@ -46,7 +46,7 @@ pub struct Renderer {
     draw_list: Vec<DrawableID>,
     skins: Vec<Rc<RefCell<dyn Skin>>>,
     stage_size: (u32, u32),
-    next_drawable_id: usize
+    next_drawable_id: usize,
 }
 
 #[repr(C)]
@@ -194,7 +194,7 @@ impl Renderer {
                 targets: &[wgpu::ColorTargetState {
                     format: swapchain_format.into(),
                     blend: Some(wgpu::BlendState::PREMULTIPLIED_ALPHA_BLENDING),
-                    write_mask: wgpu::ColorWrite::default()
+                    write_mask: wgpu::ColorWrite::default(),
                 }],
             }),
             primitive: wgpu::PrimitiveState::default(),
@@ -212,7 +212,7 @@ impl Renderer {
 
         let swap_chain = device.create_swap_chain(&surface, &sc_desc);
 
-        let sampler_nearest= device.create_sampler(&wgpu::SamplerDescriptor {
+        let sampler_nearest = device.create_sampler(&wgpu::SamplerDescriptor {
             label: Some("mip"),
             address_mode_u: wgpu::AddressMode::ClampToEdge,
             address_mode_v: wgpu::AddressMode::ClampToEdge,
@@ -223,7 +223,7 @@ impl Renderer {
             ..Default::default()
         });
 
-        let sampler_linear= device.create_sampler(&wgpu::SamplerDescriptor {
+        let sampler_linear = device.create_sampler(&wgpu::SamplerDescriptor {
             label: Some("mip"),
             address_mode_u: wgpu::AddressMode::ClampToEdge,
             address_mode_v: wgpu::AddressMode::ClampToEdge,
@@ -245,7 +245,7 @@ impl Renderer {
             index_buf,
             stage_bind_group,
             sampler_nearest,
-            sampler_linear
+            sampler_linear,
         };
 
         Self {
@@ -255,7 +255,7 @@ impl Renderer {
             draw_list: Vec::new(),
             skins: Vec::new(),
             stage_size,
-            next_drawable_id: 0
+            next_drawable_id: 0,
         }
     }
 
@@ -327,13 +327,24 @@ impl Renderer {
     }
 
     pub fn create_blank_skin(&mut self) -> Rc<RefCell<dyn Skin>> {
-        let s = Rc::new(RefCell::new(BlankSkin::new(Vec2::new(100f32, 75f32), Vec2::new(50.0, 37.5))));
+        let s = Rc::new(RefCell::new(BlankSkin::new(
+            Vec2::new(100f32, 75f32),
+            Vec2::new(50.0, 37.5),
+        )));
         self.skins.push(s);
         Rc::clone(&self.skins[self.skins.len() - 1])
     }
 
-    pub fn create_svg_skin(&mut self, svg_data: &[u8], rotation_center: (f64, f64)) -> Rc<RefCell<dyn Skin>> {
-        let s = Rc::new(RefCell::new(SVGSkin::new(&self.gpu_state, svg_data, Vec2::new(rotation_center.0 as f32, rotation_center.0 as f32))));
+    pub fn create_svg_skin(
+        &mut self,
+        svg_data: &[u8],
+        rotation_center: (f64, f64),
+    ) -> Rc<RefCell<dyn Skin>> {
+        let s = Rc::new(RefCell::new(SVGSkin::new(
+            &self.gpu_state,
+            svg_data,
+            Vec2::new(rotation_center.0 as f32, rotation_center.0 as f32),
+        )));
         self.skins.push(s);
         Rc::clone(&self.skins[self.skins.len() - 1])
     }
@@ -346,22 +357,29 @@ impl Renderer {
         let next_drawable_id = self.next_drawable_id;
         self.next_drawable_id += 1;
         let id = DrawableID(next_drawable_id);
-        let d = Drawable::new(
-            skin,
-            &self.gpu_state,
-            &self.drawable_renderer_state,
-        );
+        let d = Drawable::new(skin, &self.gpu_state, &self.drawable_renderer_state);
         self.drawables.insert(id, d);
         self.add_to_draw_list(id);
         id
     }
 
     pub fn update_drawable_position(&mut self, drawable_id: DrawableID, position: (f64, f64)) {
-        self.drawables.get_mut(&drawable_id).expect("Invalid drawable ID").set_position(Vec2::new(position.0 as f32, position.1 as f32))
+        self.drawables
+            .get_mut(&drawable_id)
+            .expect("Invalid drawable ID")
+            .set_position(Vec2::new(position.0 as f32, position.1 as f32))
     }
 
-    pub fn update_drawable_rotation_scale(&mut self, drawable_id: DrawableID, rotation: f32, scale: (f64, f64)) {
-        let drawable = self.drawables.get_mut(&drawable_id).expect("Invalid drawable ID");
+    pub fn update_drawable_rotation_scale(
+        &mut self,
+        drawable_id: DrawableID,
+        rotation: f32,
+        scale: (f64, f64),
+    ) {
+        let drawable = self
+            .drawables
+            .get_mut(&drawable_id)
+            .expect("Invalid drawable ID");
         drawable.set_rotation(rotation);
         drawable.set_scale(Vec2::new(scale.0 as f32, scale.1 as f32));
     }

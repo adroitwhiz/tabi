@@ -7,7 +7,7 @@ pub struct SVGSkin {
     rotation_center: Vec2,
     rtree: usvg::Tree,
     texture: wgpu::Texture,
-    texture_view: wgpu::TextureView
+    texture_view: wgpu::TextureView,
 }
 
 impl SVGSkin {
@@ -15,7 +15,10 @@ impl SVGSkin {
         let opt = usvg::Options::default();
         let rtree = usvg::Tree::from_data(svg_data, &opt).unwrap();
         let viewbox_rect = rtree.svg_node().view_box.rect;
-        let rotation_center = Vec2::new(rotation_center.x - (viewbox_rect.x() as f32), rotation_center.y - (viewbox_rect.y() as f32));
+        let rotation_center = Vec2::new(
+            rotation_center.x - (viewbox_rect.x() as f32),
+            rotation_center.y - (viewbox_rect.y() as f32),
+        );
         let size = Vec2::new(viewbox_rect.width() as f32, viewbox_rect.height() as f32);
 
         let mut pixmap = tiny_skia::Pixmap::new(size.x as u32, size.y as u32).unwrap();
@@ -25,7 +28,7 @@ impl SVGSkin {
         let texture_extent = wgpu::Extent3d {
             width: size.x.round() as u32,
             height: size.y.round() as u32,
-            depth_or_array_layers: 1
+            depth_or_array_layers: 1,
         };
         let texture = gpu_state.device.create_texture(&wgpu::TextureDescriptor {
             label: Some("SVGSkin"),
@@ -34,22 +37,22 @@ impl SVGSkin {
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format: wgpu::TextureFormat::Rgba8Unorm,
-            usage: wgpu::TextureUsage::SAMPLED | wgpu::TextureUsage::COPY_DST
+            usage: wgpu::TextureUsage::SAMPLED | wgpu::TextureUsage::COPY_DST,
         });
         let texture_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
         gpu_state.queue.write_texture(
             wgpu::ImageCopyTexture {
                 texture: &texture,
                 mip_level: 0,
-                origin: wgpu::Origin3d::ZERO
+                origin: wgpu::Origin3d::ZERO,
             },
             pixmap.data(),
             wgpu::ImageDataLayout {
                 offset: 0,
                 bytes_per_row: std::num::NonZeroU32::new(size.x.round() as u32 * 4),
-                rows_per_image: None
+                rows_per_image: None,
             },
-            texture_extent
+            texture_extent,
         );
 
         SVGSkin {
@@ -57,7 +60,7 @@ impl SVGSkin {
             rotation_center,
             rtree,
             texture,
-            texture_view
+            texture_view,
         }
     }
 }
