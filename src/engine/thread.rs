@@ -92,6 +92,6 @@ impl<'a> Thread<'a> {
     pub fn write_frame_value(&mut self) {
         // TODO: lots of duplicated code here because the helper functions must
         // borrow the entire struct. There's gotta be a better way to do this
-        self.stack.push(self.stack.last().unwrap().clone())
+        self.stack_frames.push(StackFrame {frame_value: self.stack.last().unwrap().clone()})
     }
 }

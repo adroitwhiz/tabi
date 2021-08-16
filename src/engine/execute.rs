@@ -83,6 +83,7 @@ pub fn execute(sprite: &mut Sprite, current_thread: &mut Thread) {
             let op1 = current_thread.pop_stack();
             let op2 = current_thread.pop_stack();
             sprite.move_to(f64::from(&op1), f64::from(&op2));
+            current_thread.request_redraw();
         }
 
         Instruction::MoveSteps => {
@@ -92,6 +93,7 @@ pub fn execute(sprite: &mut Sprite, current_thread: &mut Thread) {
                 sprite.x + (angle.sin() * steps),
                 sprite.y + (angle.cos() * steps),
             );
+            current_thread.request_redraw();
         }
     }
 

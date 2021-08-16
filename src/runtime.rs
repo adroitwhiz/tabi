@@ -93,6 +93,12 @@ impl<'a, 'eng, 'r> Runtime<'a, 'eng, 'r> {
                         execute(sprite, thread);
                     }
 
+                    if thread.status == ThreadStatus::Yield {
+                        thread.status = ThreadStatus::Running;
+                        // TODO warp mode
+                        continue;
+                    }
+
                     if thread.status == ThreadStatus::Running {
                         num_active_threads += 1;
                     }
@@ -116,6 +122,7 @@ impl<'a, 'eng, 'r> Runtime<'a, 'eng, 'r> {
     }
 
     pub fn step(&mut self) {
+        self.redraw_requested = false;
         self.step_threads();
         self.renderer.borrow_mut().draw();
     }
