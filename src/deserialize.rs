@@ -5,7 +5,12 @@ use crate::{
     },
     compile::compile_blocks,
     data::asset,
-    engine::{engine_data::EngineData, project, target},
+    engine::{
+        costume::{Costume, CostumeAsset},
+        engine_data::EngineData,
+        project, target,
+    },
+    renderer::renderer::Renderer,
     scalar_value::ScalarValue,
 };
 
@@ -282,7 +287,7 @@ fn deserialize_asset(
 fn deserialize_costume(
     serialized_costume: &Map<String, Value>,
     archive: &mut ZipArchive<File>,
-) -> Result<asset::Costume, &'static str> {
+) -> Result<CostumeAsset, &'static str> {
     let d_asset = deserialize_asset(serialized_costume, archive)?;
     let rotation_center_x = serialized_costume["rotationCenterX"]
         .as_f64()
@@ -294,7 +299,7 @@ fn deserialize_costume(
         .as_str()
         .ok_or_else(|| "costume has no name")?;
 
-    Ok(asset::Costume {
+    Ok(CostumeAsset {
         asset: d_asset,
         rotation_center: (rotation_center_x, rotation_center_y),
         name: name.to_string(),
@@ -305,6 +310,7 @@ fn deserialize_target<'eng>(
     serialized_target: &Map<String, Value>,
     archive: &mut ZipArchive<File>,
     eng_data: &'eng EngineData,
+    renderer: &mut Renderer,
 ) -> Result<target::Target, &'static str> {
     let is_stage = serialized_target["isStage"]
         .as_bool()
@@ -337,13 +343,18 @@ fn deserialize_target<'eng>(
         is_stage,
         name: name.to_string(),
         layer_order: layer_order as u32,
-        costumes: d_costumes.into_boxed_slice(),
+        costumes: d_costumes
+            .into_iter()
+            .map(|costume| costume.load(renderer))
+            .collect::<Vec<Costume>>()
+            .into_boxed_slice(),
     })
 }
 
 pub fn deserialize_project<'a, 'eng>(
     archive: &mut ZipArchive<File>,
     eng_data: &'eng EngineData,
+    renderer: &mut Renderer,
 ) -> Result<project::Project, &'a str> {
     let mut json = String::new();
     {
@@ -364,7 +375,7 @@ pub fn deserialize_project<'a, 'eng>(
             .into_iter()
             .try_for_each(|target| -> Result<(), &str> {
                 if let serde_json::Value::Object(target) = target {
-                    match deserialize_target(&target, archive, &eng_data) {
+                    match deserialize_target(&target, archive, &eng_data, renderer) {
                         Ok(t) => {
                             targets.push(t);
                             Ok(())

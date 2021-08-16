@@ -21,7 +21,7 @@ pub type Stack = Vec<ScalarValue>;
 #[derive(Debug)]
 pub struct Thread<'a> {
     pub code: &'a Script,
-    stack: Vec<ScalarValue>,
+    stack: Stack,
     stack_frames: Vec<StackFrame>,
     pub instruction_pointer: usize,
     pub status: ThreadStatus,

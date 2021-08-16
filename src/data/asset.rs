@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[derive(Debug)]
 pub enum AssetType {
     PNG,
@@ -7,16 +9,17 @@ pub enum AssetType {
     MP3,
 }
 
-#[derive(Debug)]
 pub struct Asset {
     pub data: Box<[u8]>,
     pub asset_type: AssetType,
     pub md5_digest: md5::Digest,
 }
 
-#[derive(Debug)]
-pub struct Costume {
-    pub asset: Asset,
-    pub rotation_center: (f64, f64),
-    pub name: String,
+impl fmt::Debug for Asset {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("Asset")
+            .field("asset_type", &self.asset_type)
+            .field("md5_digest", &self.md5_digest)
+            .finish()
+    }
 }

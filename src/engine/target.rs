@@ -1,4 +1,4 @@
-use crate::{data::asset::Costume, engine::instruction::Script};
+use crate::{engine::costume::Costume, engine::instruction::Script};
 
 /// The "prototype" of a sprite. Each Sprite object is an instance that refers back to one of these.
 #[derive(Debug)]

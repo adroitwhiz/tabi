@@ -1,17 +1,21 @@
-use crate::engine::{
-    engine_data::EngineData,
-    execute::execute,
-    project::Project,
-    sprite::Sprite,
-    thread::{Thread, ThreadStatus},
-    trigger::Trigger,
+use crate::{
+    engine::{
+        engine_data::EngineData,
+        execute::execute,
+        project::Project,
+        sprite::Sprite,
+        thread::{Thread, ThreadStatus},
+        trigger::Trigger,
+    },
+    renderer::renderer::Renderer,
 };
 
 use std::time::{Duration, Instant};
 
-pub struct Runtime<'a, 'eng> {
+pub struct Runtime<'a, 'eng, 'r> {
     engine_data: &'eng EngineData,
     project: &'a Project,
+    renderer: &'r mut Renderer,
     exec_contexts: Vec<ExecutionContext<'a>>,
     redraw_requested: bool,
 }
@@ -23,26 +27,31 @@ pub struct ExecutionContext<'a> {
 
 const STEP_TIME: Duration = Duration::from_nanos(33333333);
 
-impl<'a, 'eng> Runtime<'a, 'eng> {
-    pub fn new(project: &'a Project, engine_data: &'eng EngineData) -> Self {
-        let mut rt = Runtime {
-            engine_data,
-            exec_contexts: Vec::new(),
-            project,
-            redraw_requested: false,
-        };
+impl<'a, 'eng, 'r> Runtime<'a, 'eng, 'r> {
+    pub fn new(
+        project: &'a Project,
+        engine_data: &'eng EngineData,
+        mut renderer: &'r mut Renderer,
+    ) -> Self {
+        let mut exec_contexts = Vec::new();
 
-        let exec_contexts = &mut rt.exec_contexts;
-
-        rt.project.targets.iter().for_each(|target| {
+        project.targets.iter().for_each(|target| {
             let threads: Vec<Thread> = target
                 .scripts
                 .iter()
                 .map(|script| Thread::new(script))
                 .collect();
-            let sprite = Sprite::new(target);
+            let sprite = Sprite::new(target, &mut renderer);
             exec_contexts.push(ExecutionContext { sprite, threads });
         });
+
+        let mut rt = Runtime {
+            engine_data,
+            exec_contexts,
+            project,
+            renderer,
+            redraw_requested: false,
+        };
 
         rt.exec_contexts
             .sort_by_cached_key(|ctx| ctx.sprite.target.layer_order);
@@ -104,5 +113,13 @@ impl<'a, 'eng> Runtime<'a, 'eng> {
                 break;
             }
         }
+    }
+
+    pub fn step(&mut self) {
+        self.renderer.draw();
+    }
+
+    pub fn resize(&mut self, size: (u32, u32)) {
+        self.renderer.resize(size);
     }
 }

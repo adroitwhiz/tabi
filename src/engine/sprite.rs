@@ -1,17 +1,21 @@
-use crate::engine::target::Target;
+use std::rc::Rc;
 
-pub struct Sprite<'a> {
+use crate::engine::target::Target;
+use crate::renderer::renderer::{Renderer, DrawableID};
+
+pub struct Sprite<'t> {
     pub x: f64,
     pub y: f64,
     pub direction: f64,
     pub size: f64,
     pub visible: bool,
-    pub target: &'a Target,
+    pub target: &'t Target,
     pub layer_order: u32,
+    pub drawable: DrawableID
 }
 
-impl<'a> Sprite<'a> {
-    pub fn new(target: &'a Target) -> Self {
+impl<'t> Sprite<'t> {
+    pub fn new(target: &'t Target, renderer: &mut Renderer) -> Self {
         Sprite {
             x: 0.0,
             y: 0.0,
@@ -20,6 +24,7 @@ impl<'a> Sprite<'a> {
             visible: true,
             target,
             layer_order: target.layer_order,
+            drawable: renderer.create_drawable(Rc::clone(&target.costumes[0].skin))
         }
     }
 
