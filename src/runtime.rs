@@ -10,18 +10,18 @@ use crate::{
     renderer::renderer::Renderer,
 };
 
-use std::time::{Duration, Instant};
+use std::{cell::RefCell, time::{Duration, Instant}};
 
 pub struct Runtime<'a, 'eng, 'r> {
     engine_data: &'eng EngineData,
     project: &'a Project,
-    renderer: &'r mut Renderer,
-    exec_contexts: Vec<ExecutionContext<'a>>,
+    renderer: &'r RefCell<Renderer>,
+    exec_contexts: Vec<ExecutionContext<'a, 'r>>,
     redraw_requested: bool,
 }
 
-pub struct ExecutionContext<'a> {
-    pub sprite: Sprite<'a>,
+pub struct ExecutionContext<'a, 'r> {
+    pub sprite: Sprite<'a, 'r>,
     pub threads: Vec<Thread<'a>>,
 }
 
@@ -31,7 +31,7 @@ impl<'a, 'eng, 'r> Runtime<'a, 'eng, 'r> {
     pub fn new(
         project: &'a Project,
         engine_data: &'eng EngineData,
-        renderer: &'r mut Renderer,
+        renderer: &'r RefCell<Renderer>,
     ) -> Self {
         let mut exec_contexts = Vec::new();
 
@@ -117,10 +117,10 @@ impl<'a, 'eng, 'r> Runtime<'a, 'eng, 'r> {
 
     pub fn step(&mut self) {
         self.step_threads();
-        self.renderer.draw();
+        self.renderer.borrow_mut().draw();
     }
 
     pub fn resize(&mut self, size: (u32, u32)) {
-        self.renderer.resize(size);
+        self.renderer.borrow_mut().resize(size);
     }
 }

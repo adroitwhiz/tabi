@@ -356,13 +356,13 @@ impl Renderer {
         id
     }
 
-    pub fn update_drawable_position(&mut self, drawable_id: DrawableID, position: Vec2) {
-        self.drawables.get_mut(&drawable_id).expect("Invalid drawable ID").set_position(position)
+    pub fn update_drawable_position(&mut self, drawable_id: DrawableID, position: (f64, f64)) {
+        self.drawables.get_mut(&drawable_id).expect("Invalid drawable ID").set_position(Vec2::new(position.0 as f32, position.1 as f32))
     }
 
-    pub fn update_drawable_rotation_scale(&mut self, drawable_id: DrawableID, rotation: f32, scale: Vec2) {
+    pub fn update_drawable_rotation_scale(&mut self, drawable_id: DrawableID, rotation: f32, scale: (f64, f64)) {
         let drawable = self.drawables.get_mut(&drawable_id).expect("Invalid drawable ID");
         drawable.set_rotation(rotation);
-        drawable.set_scale(scale);
+        drawable.set_scale(Vec2::new(scale.0 as f32, scale.1 as f32));
     }
 }
