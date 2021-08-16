@@ -1,38 +1,13 @@
-pub mod scalar_value;
+pub mod engine;
+pub mod renderer;
 
-pub mod engine {
-    pub mod costume;
-    pub mod engine_data;
-    pub mod execute;
-    pub mod instruction;
-    pub mod project;
-    pub mod sprite;
-    pub mod target;
-    pub mod thread;
-    pub mod trigger;
-}
+pub mod data;
 
-pub mod blocks {
-    pub mod block;
-    pub mod block_specs;
-}
-
-pub mod data {
-    pub mod asset;
-}
-
+pub mod blocks;
 pub mod compile;
 pub mod deserialize;
 pub mod runtime;
-pub mod renderer {
-    pub mod bitmap_skin;
-    pub mod blank_skin;
-    pub mod common;
-    pub mod drawable;
-    pub mod renderer;
-    pub mod skin;
-    pub mod svg_skin;
-}
+pub mod scalar_value;
 
 use crate::engine::{engine_data::EngineData, trigger::Trigger};
 
