@@ -346,7 +346,7 @@ impl Renderer {
         let next_drawable_id = self.next_drawable_id;
         self.next_drawable_id += 1;
         let id = DrawableID(next_drawable_id);
-        let mut d = Drawable::new(
+        let d = Drawable::new(
             skin,
             &self.gpu_state,
             &self.drawable_renderer_state,

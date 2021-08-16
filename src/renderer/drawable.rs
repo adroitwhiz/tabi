@@ -5,7 +5,7 @@ use bytemuck::{Pod, Zeroable};
 use glam::{Affine2, Vec2};
 
 use super::common::RendererState;
-use super::renderer::{GpuState, Renderer};
+use super::renderer::{GpuState};
 use super::skin::Skin;
 
 pub(super) struct DrawableRendererState {
