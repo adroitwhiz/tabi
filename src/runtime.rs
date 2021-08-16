@@ -10,7 +10,10 @@ use crate::{
     renderer::renderer::Renderer,
 };
 
-use std::{cell::RefCell, time::{Duration, Instant}};
+use std::{
+    cell::RefCell,
+    time::{Duration, Instant},
+};
 
 pub struct Runtime<'a, 'eng, 'r> {
     engine_data: &'eng EngineData,

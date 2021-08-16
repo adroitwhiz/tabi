@@ -1,5 +1,8 @@
 use serde_json::Value;
-use std::{cmp::Ordering, convert::{TryFrom, Into}};
+use std::{
+    cmp::Ordering,
+    convert::{Into, TryFrom},
+};
 
 #[derive(Debug, Clone)]
 pub enum ScalarValue {

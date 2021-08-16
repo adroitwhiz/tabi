@@ -38,7 +38,12 @@ use crate::engine::{engine_data::EngineData, trigger::Trigger};
 
 use renderer::renderer::Renderer;
 use runtime::Runtime;
-use std::{cell::RefCell, error::Error, fs, time::{Duration, Instant}};
+use std::{
+    cell::RefCell,
+    error::Error,
+    fs,
+    time::{Duration, Instant},
+};
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -73,9 +78,14 @@ fn run() -> Result<(), Box<dyn Error>> {
     });
     let size = window.inner_size();
 
-    let renderer = RefCell::new(Renderer::with_window(&window, (size.width, size.height), (480, 360)));
+    let renderer = RefCell::new(Renderer::with_window(
+        &window,
+        (size.width, size.height),
+        (480, 360),
+    ));
 
-    let project = deserialize::deserialize_project(&mut archive, &eng_data, &mut renderer.borrow_mut())?;
+    let project =
+        deserialize::deserialize_project(&mut archive, &eng_data, &mut renderer.borrow_mut())?;
 
     println!("{:?}", project);
 
