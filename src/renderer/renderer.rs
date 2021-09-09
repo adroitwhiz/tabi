@@ -20,9 +20,8 @@ const NUM_INDICES: usize = 6;
 pub struct DrawableID(usize);
 
 pub(super) struct GpuState {
-    pub swap_chain: wgpu::SwapChain,
-    pub sc_desc: wgpu::SwapChainDescriptor,
     pub surface: wgpu::Surface,
+    pub surface_config: wgpu::SurfaceConfiguration,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     pub render_pipeline: wgpu::RenderPipeline,
@@ -79,7 +78,7 @@ static QUAD_INDICES: [u16; NUM_INDICES] = [0, 1, 2, 1, 2, 3];
 
 impl Renderer {
     pub fn with_window(window: &Window, size: (u32, u32), stage_size: (u32, u32)) -> Self {
-        let instance = wgpu::Instance::new(wgpu::BackendBit::all());
+        let instance = wgpu::Instance::new(wgpu::Backends::all());
         let surface = unsafe { instance.create_surface(window) };
         let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::default(),
@@ -104,20 +103,19 @@ impl Renderer {
         let vertex_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
             contents: bytemuck::cast_slice(&QUAD_VERTS),
-            usage: wgpu::BufferUsage::VERTEX,
+            usage: wgpu::BufferUsages::VERTEX,
         });
 
         let index_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Index Buffer"),
             contents: bytemuck::cast_slice(&QUAD_INDICES),
-            usage: wgpu::BufferUsage::INDEX,
+            usage: wgpu::BufferUsages::INDEX,
         });
 
         // Load the shaders from disk
         let shader = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
             label: None,
             source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
-            flags: wgpu::ShaderFlags::all(),
         });
 
         let stage_bind_group_layout =
@@ -125,7 +123,7 @@ impl Renderer {
                 label: Some("Drawable"),
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStage::VERTEX,
+                    visibility: wgpu::ShaderStages::VERTEX,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -140,7 +138,7 @@ impl Renderer {
             contents: bytemuck::bytes_of(&StageUniforms {
                 size: [stage_size.0 as f32, stage_size.1 as f32],
             }),
-            usage: wgpu::BufferUsage::UNIFORM,
+            usage: wgpu::BufferUsages::UNIFORM,
         });
 
         let stage_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -163,7 +161,7 @@ impl Renderer {
 
         let vertex_buffers = [wgpu::VertexBufferLayout {
             array_stride: mem::size_of::<Vertex>() as u64,
-            step_mode: wgpu::InputStepMode::Vertex,
+            step_mode: wgpu::VertexStepMode::Vertex,
             attributes: &[
                 wgpu::VertexAttribute {
                     format: wgpu::VertexFormat::Float32x2,
@@ -178,7 +176,7 @@ impl Renderer {
             ],
         }];
 
-        let swapchain_format = wgpu::TextureFormat::Bgra8Unorm;
+        let surface_format = wgpu::TextureFormat::Bgra8Unorm;
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: None,
@@ -192,9 +190,9 @@ impl Renderer {
                 module: &shader,
                 entry_point: "fs_main",
                 targets: &[wgpu::ColorTargetState {
-                    format: swapchain_format.into(),
+                    format: surface_format.into(),
                     blend: Some(wgpu::BlendState::PREMULTIPLIED_ALPHA_BLENDING),
-                    write_mask: wgpu::ColorWrite::default(),
+                    write_mask: wgpu::ColorWrites::default(),
                 }],
             }),
             primitive: wgpu::PrimitiveState::default(),
@@ -202,15 +200,15 @@ impl Renderer {
             multisample: wgpu::MultisampleState::default(),
         });
 
-        let sc_desc = wgpu::SwapChainDescriptor {
-            usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
-            format: swapchain_format,
+        let surface_config = wgpu::SurfaceConfiguration {
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            format: surface_format,
             width: size.0,
             height: size.1,
             present_mode: wgpu::PresentMode::Mailbox,
         };
 
-        let swap_chain = device.create_swap_chain(&surface, &sc_desc);
+        surface.configure(&device, &surface_config);
 
         let sampler_nearest = device.create_sampler(&wgpu::SamplerDescriptor {
             label: Some("mip"),
@@ -235,9 +233,8 @@ impl Renderer {
         });
 
         let gpu_state = GpuState {
-            swap_chain,
-            sc_desc,
             surface,
+            surface_config,
             device,
             queue,
             render_pipeline,
@@ -309,21 +306,19 @@ impl Renderer {
     pub fn draw(&mut self) {
         let frame = self
             .gpu_state
-            .swap_chain
+            .surface
             .get_current_frame()
             .expect("Failed to acquire next swap chain texture")
             .output;
 
-        self.draw_these(&frame.view);
+        let view = frame.texture.create_view(&wgpu::TextureViewDescriptor::default());
+        self.draw_these(&view);
     }
 
     pub fn resize(&mut self, size: (u32, u32)) {
-        self.gpu_state.sc_desc.width = size.0;
-        self.gpu_state.sc_desc.height = size.1;
-        self.gpu_state.swap_chain = self
-            .gpu_state
-            .device
-            .create_swap_chain(&self.gpu_state.surface, &self.gpu_state.sc_desc);
+        self.gpu_state.surface_config.width = size.0;
+        self.gpu_state.surface_config.height = size.1;
+        self.gpu_state.surface.configure(&self.gpu_state.device, &self.gpu_state.surface_config);
     }
 
     pub fn create_blank_skin(&mut self) -> Rc<RefCell<dyn Skin>> {
