@@ -13,7 +13,7 @@ pub struct SVGSkin {
 impl SVGSkin {
     pub(super) fn new(gpu_state: &GpuState, svg_data: &[u8], rotation_center: Vec2) -> Self {
         let opt = usvg::Options::default();
-        let rtree = usvg::Tree::from_data(svg_data, &opt).unwrap();
+        let rtree = usvg::Tree::from_data(svg_data, &opt.to_ref()).unwrap();
         let viewbox_rect = rtree.svg_node().view_box.rect;
         let rotation_center = Vec2::new(
             rotation_center.x - (viewbox_rect.x() as f32),
@@ -22,7 +22,7 @@ impl SVGSkin {
         let size = Vec2::new(viewbox_rect.width() as f32, viewbox_rect.height() as f32);
 
         let mut pixmap = tiny_skia::Pixmap::new(size.x as u32, size.y as u32).unwrap();
-        resvg::render(&rtree, usvg::FitTo::Original, pixmap.as_mut()).unwrap();
+        resvg::render(&rtree, usvg::FitTo::Original, tiny_skia::Transform::default(), pixmap.as_mut()).unwrap();
         pixmap.data();
 
         let texture_extent = wgpu::Extent3d {

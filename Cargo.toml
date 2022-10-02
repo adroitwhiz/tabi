@@ -8,7 +8,7 @@ resolver = "2"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-zip = "0.5"
+zip = "0.6"
 serde_json = "1.0"
 num_enum = "0.5"
 md5 = "0.7.0"
@@ -16,9 +16,9 @@ hex = "0.4.3"
 winit = "0.27"
 futures = "0.3.13"
 wgpu = "0.13"
-glam = "0.17.1"
-env_logger = "0.8.4"
-bytemuck = { version = "1.7", features = ["derive"] }
-usvg = "0.15"
-resvg = "0.15"
-tiny-skia = "0.5"
+glam = "0.21.3"
+env_logger = "0.9.1"
+bytemuck = { version = "1.12", features = ["derive"] }
+usvg = "0.23"
+resvg = "0.23"
+tiny-skia = "0.6"
