@@ -45,7 +45,7 @@ impl SVGSkin {
                 texture: &texture,
                 mip_level: 0,
                 origin: wgpu::Origin3d::ZERO,
-                aspect: wgpu::TextureAspect::All
+                aspect: wgpu::TextureAspect::All,
             },
             pixmap.data(),
             wgpu::ImageDataLayout {

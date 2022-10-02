@@ -1,29 +1,31 @@
 struct VertexOutput {
-    [[location(0)]] tex_coord: vec2<f32>;
-    [[builtin(position)]] position: vec4<f32>;
+    @location(0) tex_coord: vec2<f32>,
+    @builtin(position) position: vec4<f32>,
 };
 
-[[block]]
 struct Drawable {
-    matrix: mat2x2<f32>;
-    translation: vec2<f32>;
+    transform: mat2x2<f32>,
+    translation: vec2<f32>,
 };
-[[group(1), binding(0)]]
-var r_drawable: Drawable;
+@group(1)
+@binding(0)
+var<uniform> r_drawable: Drawable;
 
-[[group(1), binding(1)]]
+@group(1)
+@binding(1)
 var r_color: texture_2d<f32>;
 
-[[group(1), binding(2)]]
+@group(1)
+@binding(2)
 var r_sampler: sampler;
 
-[[block]]
 struct Stage {
-    size: vec2<f32>;
+    size: vec2<f32>,
 };
 
-[[group(0), binding(0)]]
-var r_stage: Stage;
+@group(0)
+@binding(0)
+var<uniform> r_stage: Stage;
 
 fn rgb_to_hsv(c: vec3<f32>) -> vec3<f32> {
     var K: vec4<f32> = vec4<f32>(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
@@ -36,19 +38,19 @@ fn rgb_to_hsv(c: vec3<f32>) -> vec3<f32> {
     //return vec3<f32>(0.0, 0.0, 0.0);
 }
 
-[[stage(vertex)]]
+@vertex
 fn vs_main(
-    [[location(0)]] position: vec2<f32>,
-    [[location(1)]] tex_coord: vec2<f32>,
+    @location(0) position: vec2<f32>,
+    @location(1) tex_coord: vec2<f32>,
 ) -> VertexOutput {
     var out: VertexOutput;
     out.tex_coord = tex_coord;
-    out.position = vec4<f32>(((r_drawable.matrix * position) + r_drawable.translation) / (r_stage.size * 0.5), 0.0, 1.0);
+    out.position = vec4<f32>(((r_drawable.transform * position) + r_drawable.translation) / (r_stage.size * 0.5), 0.0, 1.0);
     return out;
 }
 
-[[stage(fragment)]]
-fn fs_main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     //return vec4<f32>(rgb_to_hsv(vec3<f32>(in.tex_coord.x, 1.0, 1.0)), 1.0);
     //return vec4<f32>(in.tex_coord.x, in.tex_coord.y, 0.0, 1.0);
     return textureSample(r_color, r_sampler, in.tex_coord);
